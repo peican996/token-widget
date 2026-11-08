@@ -4,6 +4,11 @@
 
 > 纯本地运行：不联网上传任何用量数据，不做账号登录，不读取云端账单以外的信息。
 
+<p align="center">
+  <img src="docs/preview.png" width="300" alt="主面板（演示数据）">
+  <img src="docs/preview-ball.png" width="96" alt="小球形态（演示数据）">
+</p>
+
 ## 功能
 
 - 今日 / 本月 / 累计 token 总量，主数字大号展示
@@ -53,6 +58,14 @@ pyinstaller TokenWidget.spec
 - `launch-trae-debug.cmd`：以 `--inspect=9229` 启动 Trae；部分版本启动器会剥离该参数，届时脚本会提示失败
 
 如果你只需要 Claude Code / WorkBuddy 的本地日志统计，把 `config.json` 里对应来源之外的 `enabled` 全部改成 `false` 即可，功能不受影响。
+
+## 架构
+
+<p align="center">
+  <img src="docs/architecture.png" width="100%" alt="数据流：本地数据源 → 采集线程 → SQLite → UI 轮询">
+</p>
+
+采集线程按 `collect_seconds` 周期运行各采集器，只负责增量读取与入库；UI 线程用独立的 `QTimer` 查询聚合结果，两者互不阻塞。
 
 ## 配置
 
@@ -104,6 +117,7 @@ token-widget/
 ├─ trae_hook.py         # 实验性：主进程注入（可还原）
 ├─ trae_boot_marker.py  # 实验性：启动标记
 ├─ TokenWidget.spec     # PyInstaller 打包配置
+├─ docs/                # README 截图与数据流图
 └─ requirements.txt
 ```
 
