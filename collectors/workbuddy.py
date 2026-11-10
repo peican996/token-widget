@@ -11,7 +11,7 @@ import os
 from datetime import datetime, timezone
 
 from pricing import calc_cost_usd
-from storage import get_state, set_state
+from storage import get_state
 
 STATE_KEY = "workbuddy_offsets"
 DEFAULT_DIRS = [r"~\.workbuddy\projects", r"~\.workbuddy-ai\projects"]
@@ -19,6 +19,7 @@ DEFAULT_DIRS = [r"~\.workbuddy\projects", r"~\.workbuddy-ai\projects"]
 
 class WorkBuddyCollector:
     source = "workbuddy"
+    state_key = STATE_KEY
 
     def __init__(self, cfg):
         dirs = cfg.get("log_dirs") or DEFAULT_DIRS
@@ -58,8 +59,8 @@ class WorkBuddyCollector:
                     rec = self._parse_line(line)
                     if rec:
                         records.append(rec)
-        set_state(STATE_KEY, json.dumps(new_offsets))
-        return {"usage": records, "quota": None}
+        # offset 由调用方在入库成功后提交，避免入库失败时丢数据
+        return {"usage": records, "quota": None, "offsets": new_offsets}
 
     def _load_offsets(self):
         try:

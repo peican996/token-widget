@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """入口：初始化存储 → 后台采集线程 → 悬浮窗事件循环"""
+import json
 import sys
 import threading
 import traceback
@@ -15,12 +16,12 @@ from widget import TokenWidget
 ERROR_LOG = "%s\\error.log" % config.DATA_DIR
 
 
-def log_error():
+def log_error(source=""):
     """窗口模式没有 stderr，异常统一写文件"""
     try:
         with open(ERROR_LOG, "a", encoding="utf-8") as f:
-            f.write("[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  traceback.format_exc()))
+            f.write("[%s] %s %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                      source, traceback.format_exc()))
     except OSError:
         pass
 
@@ -41,8 +42,15 @@ def collect_loop(cfg, stop):
                         quota.get("used_usd"), quota.get("total_usd"),
                         quota.get("label", ""), quota.get("raw", ""),
                     )
+                    # 记录当天基线，供“今日”增量计算
+                    storage.note_quota_fetch(col.source, quota.get("used_usd"))
+                # 入库成功后再提交 offset，失败时下次重读这部分日志
+                offsets = result.get("offsets")
+                state_key = getattr(col, "state_key", None)
+                if offsets is not None and state_key:
+                    storage.set_state(state_key, json.dumps(offsets))
             except Exception:
-                log_error()
+                log_error(getattr(col, "source", ""))
         stop.wait(interval)
 
 

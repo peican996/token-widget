@@ -586,10 +586,10 @@ class TokenWidget(QWidget):
         if show_trae:
             used = trae.get("used_usd") or 0
             total = trae["total_usd"]
-            trae_today = storage.quota_used_today(("trae_api", "trae")) or 0
+            trae_today = storage.quota_used_today(trae["source"])
             self.cred_trae.set_data(
                 "Trae",
-                [("今日", fmt_credit_val(trae_today)),
+                [("今日", "--" if trae_today is None else fmt_credit_val(trae_today)),
                  ("已用", "{:,.0f}".format(used)),
                  ("额度", "{:,.0f}".format(total))],
                 QColor(MUTED))

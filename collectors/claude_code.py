@@ -5,13 +5,14 @@ import json
 import os
 
 from pricing import calc_cost_usd
-from storage import get_state, set_state
+from storage import get_state
 
 STATE_KEY = "claude_code_offsets"
 
 
 class ClaudeCodeCollector:
     source = "claude_code"
+    state_key = STATE_KEY
 
     def __init__(self, cfg):
         self.log_dir = os.path.expanduser(cfg.get("log_dir", r"~\.claude\projects"))
@@ -50,8 +51,8 @@ class ClaudeCodeCollector:
                 rec = self._parse_line(line)
                 if rec:
                     records.append(rec)
-        set_state(STATE_KEY, json.dumps(new_offsets))
-        return {"usage": records, "quota": None}
+        # offset 由调用方在入库成功后提交，避免入库失败时丢数据
+        return {"usage": records, "quota": None, "offsets": new_offsets}
 
     def _load_offsets(self):
         try:
